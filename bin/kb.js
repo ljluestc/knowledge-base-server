@@ -82,6 +82,13 @@ Commands:
   summarize          Add AI summaries to docs without them (--dry-run, --limit=N)
   capture-x [path]   Capture X/Twitter bookmarks to vault
   setup              Interactive setup wizard (--auto for agent mode)
+
+MCP-first environment variables:
+  KB_AUTO_PASSWORD=true    Auto-generate password for MCP-only usage
+  KB_SKIP_PASSWORD=true    Skip password setup entirely
+  KB_AUTO_INIT=false       Disable auto-init on MCP startup
+  KB_USE_CWD=true          Use CWD as KB root (like mcpvault)
+  KB_DIR=<path>            Custom KB directory location
 `);
   process.exit(command ? 1 : 0);
 }

@@ -115,6 +115,20 @@ function initSchema(db) {
 
 export { initSchema, getDb };
 
+/**
+ * Initialize the database schema.
+ * Called externally by MCP startup for auto-init.
+ */
+export function initDatabase() {
+  if (!db) {
+    db = new Database(DB_PATH);
+    db.pragma('journal_mode = WAL');
+    db.pragma('wal_autocheckpoint = 100');
+    initSchema(db);
+  }
+  return db;
+}
+
 export function insertDocument({ title, content, source, doc_type, tags, file_path, file_size }) {
   const stmt = getDb().prepare(`
     INSERT INTO documents (title, content, source, doc_type, tags, file_path, file_size)

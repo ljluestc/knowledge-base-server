@@ -21,6 +21,17 @@ export function hasPassword() {
 }
 
 /**
+ * Auto-generate and set a random password for MCP-only usage.
+ * Returns the generated password (for logging/display).
+ * Only used when KB_AUTO_PASSWORD=true and no password is set.
+ */
+export function autoSetPassword() {
+  const generated = randomBytes(8).toString('hex');
+  setPassword(generated);
+  return generated;
+}
+
+/**
  * Hash and persist a password to config.json.
  */
 export function setPassword(plaintext) {

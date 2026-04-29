@@ -1,11 +1,11 @@
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { existsSync, writeFileSync, unlinkSync, globSync } from 'fs';
+import { existsSync, writeFileSync, unlinkSync, globSync, readFileSync } from 'fs';
 import { homedir } from 'os';
 
-import { PID_PATH } from './paths.js';
-import { hasPassword, setPassword, promptPassword, authMiddleware } from './auth.js';
+import { PID_PATH, shouldAutoInit } from './paths.js';
+import { hasPassword, setPassword, promptPassword, authMiddleware, autoSetPassword } from './auth.js';
 import { getDocumentCount } from './db.js';
 import { ingestDirectory } from './ingest.js';
 import cors from 'cors';
@@ -32,12 +32,29 @@ export async function start() {
     setTimeout(() => process.exit(1), 1000);
   });
 
-  // 1. Password setup
+  // 1. Password setup - support MCP-first auto-mode
+  // KB_AUTO_PASSWORD=true allows auto-generated password for MCP-only usage
   if (process.env.KB_PASSWORD && !hasPassword()) {
     setPassword(process.env.KB_PASSWORD);
     console.log('Password set from KB_PASSWORD env var');
+  } else if (process.env.KB_AUTO_PASSWORD === 'true' && !hasPassword()) {
+    const generated = autoSetPassword();
+    console.log(`Password auto-generated for MCP-only usage: ${generated}`);
+    console.log('Set KB_PASSWORD in .env or use kb setup for credential lockdown');
   } else if (!hasPassword()) {
-    await promptPassword();
+    // Only prompt for password if running interactively (TTY)
+    if (process.stdin.isTTY) {
+      await promptPassword();
+    } else {
+      // Non-interactive: auto-generate if allowed, otherwise fail
+      if (process.env.KB_SKIP_PASSWORD === 'true') {
+        console.log('Password setup skipped (KB_SKIP_PASSWORD=true)');
+      } else {
+        console.error('No password configured. Set KB_PASSWORD env var or run interactively.');
+        console.error('For MCP-only usage, set KB_AUTO_PASSWORD=true');
+        process.exit(1);
+      }
+    }
   }
 
   // 2. Auto-ingest on first run
